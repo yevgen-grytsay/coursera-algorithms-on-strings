@@ -29,19 +29,20 @@ public class TrieMatching implements Runnable {
 
 	List <Integer> solve (String text, int n, List <String> patterns) {
 		List <Integer> result = new ArrayList <Integer> ();
-		List<Map<Character, Integer>> trie = buildTrie(patterns);
+		List<Node> trie = buildTrie(patterns);
 
 		int index = 0;
 		while (index < text.length()) {
 			String prefix = text.substring(index);
 
-			Map<Character, Integer> currentNode = trie.get(0);
+			Node currentNode = trie.get(0);
 			for (char c : prefix.toCharArray()) {
-				if (currentNode.containsKey(c)) {
-					currentNode = trie.get(currentNode.get(c));
+				int nextNodeIndex = currentNode.next[letterToIndex(c)];
+				if (nextNodeIndex != Node.NA) {
+					currentNode = trie.get(nextNodeIndex);
 
-					// is leaf
-					if (currentNode.isEmpty()) {
+					boolean isLeaf = Arrays.stream(currentNode.next).allMatch(nodeIndex -> nodeIndex == Node.NA);
+					if (isLeaf) {
 						result.add(index);
 						break;
 					}
@@ -56,21 +57,23 @@ public class TrieMatching implements Runnable {
 		return result;
 	}
 
-	List<Map<Character, Integer>> buildTrie(List <String> patterns) {
-		List<Map<Character, Integer>> trie = new ArrayList<Map<Character, Integer>>();
+	List<Node> buildTrie(List <String> patterns) {
+		List<Node> trie = new ArrayList<>();
 
-		trie.add(new HashMap<>());
+		trie.add(new Node());
 
 		patterns.forEach(p -> {
-			Map<Character, Integer> currentNode = trie.get(0);
+			Node currentNode = trie.get(0);
 
 			for (char c : p.toCharArray()) {
-				if (currentNode.containsKey(c)) {
-					currentNode = trie.get(currentNode.get(c));
+				int nextNodeIndex = currentNode.next[letterToIndex(c)];
+				if (nextNodeIndex != Node.NA) {
+					currentNode = trie.get(nextNodeIndex);
 				} else {
-					trie.add(new HashMap<>());
-					currentNode.put(c, trie.size() - 1);
-					currentNode = trie.get(trie.size() - 1);
+					Node newNode = new Node();
+					trie.add(newNode);
+					currentNode.next[letterToIndex(c)] = trie.size() - 1;
+					currentNode = newNode;
 				}
 			}
 		});
